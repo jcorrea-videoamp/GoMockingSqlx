@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"regexp"
 	"testing"
 
 	sqlxmock "github.com/zhashkevych/go-sqlxmock"
@@ -69,4 +71,21 @@ func TestUserRepository_Insert(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSelectContext(t *testing.T) {
+	db, mock, err := sqlxmock.Newx()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	s := NewUserRepository(db)
+	rows := sqlxmock.NewRows([]string{"FIRST_NAME", "LAST_NAME", "USERNAME", "PASSWORD"}).AddRow("John", "Doe", "johndoe", "qwerty1234")
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM table WHERE id=15`)).WillReturnRows(rows)
+	u, err := s.GetById(15)
+	if err != nil {
+		fmt.Println("Errrorr!", err)
+	}
+	fmt.Printf("users: %#v", u)
 }
