@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type User struct {
-	FirstName string
-	LastName  string
-	Username  string
-	Password  string
+	FirstName string `db:"FIRST_NAME"`
+	LastName  string `db:"LAST_NAME"`
+	Username  string `db:"USERNAME"`
+	Password  string `db:"PASSWORD"`
 }
 
 type UserRepository interface {
@@ -40,7 +43,16 @@ func (r *userRepository) Insert(user User) (int, error) {
 
 func (r *userRepository) GetById(id int) (User, error) {
 	fmt.Println("User id:", id)
-	return User{}, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	queryUser := []User{}
+	query := "SELECT * FROM table WHERE id=" + strconv.Itoa(id)
+	err := r.db.SelectContext(ctx, &queryUser, query)
+	if err != nil {
+		fmt.Println("Ohhh", err)
+		return User{}, err
+	}
+	return queryUser[0], nil
 }
 
 func (r *userRepository) Get(username, password string) (User, error) {
@@ -50,3 +62,4 @@ func (r *userRepository) Get(username, password string) (User, error) {
 func main() {
 
 }
+
